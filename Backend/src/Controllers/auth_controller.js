@@ -29,7 +29,7 @@ const hashPassword = await bcrypt.hash(password, 10);
     }
 }
 
-export const userLogin = async(req,res)=>{
+export const userLogin = async(req,res,next)=>{
     const {email, password} = req.body
    try {
      const existingUser = await User.findOne({email})
@@ -37,8 +37,11 @@ export const userLogin = async(req,res)=>{
        return res.status(401).json({success: false, message: "user not found"})
     }
 
+    const matchPassword = await bcrypt.compare(password, existingUser.password);
 
-    if(existingUser.password !== password){
+
+
+    if(!matchPassword){
        return res.status(401).json({ success: false, message: "password not matched"})
     }
 
@@ -51,5 +54,22 @@ export const userLogin = async(req,res)=>{
    return res.status(400).json({success: false, message: "login failed"})
    }
 
+
+}
+
+export const currentUser = async (req,res,next) => {
+  if(!req.user){
+  return  res.status(401).json({success:false })
+  } 
+  
+  const user = await User.findById(req.user._id)
+
+  if(!user){
+   return res.status(401).json({success:false, message: "user not found"})
+  }
+
+  return res.status(201).json({success:true, message: "user fetched successfully", user})
+   
+   
 
 }
